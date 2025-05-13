@@ -1,159 +1,148 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lung Cancer Prediction</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lung Cancer Self-Check</title>
   <style>
-    /* Rust Cohle inspired dark, moody theme */
     body {
       margin: 0;
       padding: 0;
-      background: #1a1a1a;
+      background-color: #121212;
       color: #e0e0e0;
       font-family: 'Georgia', serif;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
     #container {
-      background: rgba(0,0,0,0.7);
-      border: 1px solid #444;
-      border-radius: 8px;
+      max-width: 600px;
       padding: 2rem;
-      max-width: 400px;
-      width: 100%;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
-      text-align: center;
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
     }
     .question {
+      font-size: 1.25rem;
       margin-bottom: 1.5rem;
     }
-    .question p {
-      margin: 0 0 0.5rem;
-    }
-    .buttons, .input-group {
+    .btn-group {
       display: flex;
-      justify-content: space-between;
+      gap: 1rem;
     }
     button {
-      background: #ff4500;
+      background-color: #333;
+      color: #e0e0e0;
+      padding: 0.75rem 1.5rem;
       border: none;
-      padding: 0.5rem 1rem;
-      color: #fff;
-      font-family: 'Georgia', serif;
+      border-radius: 8px;
       cursor: pointer;
-      border-radius: 4px;
-      flex: 1;
-      margin: 0 0.25rem;
+      font-size: 1rem;
     }
     button:hover {
-      background: #e03e00;
+      background-color: #555;
     }
-    input[type="number"] {
-      width: 100%;
-      padding: 0.5rem;
-      border: 1px solid #555;
-      border-radius: 4px;
-      background: #222;
-      color: #e0e0e0;
-    }
-    #result {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 1.2rem;
+    .result {
+      margin-top: 2rem;
+      font-size: 1.25rem;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <h1>Lung Cancer Self-Check</h1>
-    <div id="wizard">
-      <!-- dynamic content -->
-    </div>
-  </div>
-  <script>
+    <div id="dialogue" class="question"># Lung Cancer Self-Check</div>
+    <div class="btn-group" id="buttons"></div>
+    <div class="result" id="result"></div>
+  </div>  <script>
+    const dialogue = document.getElementById('dialogue')
+    const buttons = document.getElementById('buttons')
+    const result = document.getElementById('result')
+
     const questions = [
-      { key: 'intro', text: 'I'm Rust. I'll ask you a few questions. Answer honestly.', type: 'intro' },
-      { key: 'GENDER', text: 'Are you male?', type: 'yesno', map: {'yes':'M','no':'F'} },
-      { key: 'AGE', text: 'Enter your age:', type: 'number' },
-      { key: 'SMOKING', text: 'Do you smoke currently?', type: 'yesno', map:{'yes':1,'no':0} },
-      { key: 'YELLOW_FINGERS', text: 'Do you have yellow fingers (tobacco stain)?', type: 'yesno', map:{'yes':1,'no':0} },
-      // ... add remaining boolean questions similarly
-      { key: 'LUNG_CANCER', text: 'Submit for prediction?', type: 'submit' }
-    ];
-    let answers = {};
-    let idx = 0;
-    const wizard = document.getElementById('wizard');function render() {
-  wizard.innerHTML = '';
-  const q = questions[idx];
-  const container = document.createElement('div');
-  container.className = 'question';
-  const p = document.createElement('p');
-  p.textContent = q.text;
-  container.appendChild(p);
+      { key: 'GENDER', prompt: "What's your gender?", options: ['M', 'F'] },
+      { key: 'AGE', prompt: "How old are you?", input: true },
+      { key: 'SMOKING', prompt: "Do you smoke?", options: ['Yes', 'No'] },
+      { key: 'YELLOW_FINGERS', prompt: "Do you have yellow fingers?", options: ['Yes', 'No'] },
+      { key: 'ANXIETY', prompt: "Do you experience anxiety?", options: ['Yes', 'No'] },
+      { key: 'PEER_PRESSURE', prompt: "Do you feel peer pressure?", options: ['Yes', 'No'] },
+      { key: 'CHRONIC_DISEASE', prompt: "Do you have chronic disease?", options: ['Yes', 'No'] },
+      { key: 'FATIGUE', prompt: "Do you feel fatigue often?", options: ['Yes', 'No'] },
+      { key: 'ALLERGY', prompt: "Do you have allergies?", options: ['Yes', 'No'] },
+      { key: 'WHEEZING', prompt: "Do you wheeze often?", options: ['Yes', 'No'] },
+      { key: 'ALCOHOL_CONSUMING', prompt: "Do you consume alcohol?", options: ['Yes', 'No'] },
+      { key: 'COUGHING', prompt: "Do you cough often?", options: ['Yes', 'No'] },
+      { key: 'SHORTNESS_OF_BREATH', prompt: "Do you experience shortness of breath?", options: ['Yes', 'No'] },
+      { key: 'SWALLOWING_DIFFICULTY', prompt: "Do you have difficulty swallowing?", options: ['Yes', 'No'] },
+      { key: 'CHEST_PAIN', prompt: "Do you feel chest pain?", options: ['Yes', 'No'] }
+    ]
 
-  if (q.type === 'intro') {
-    const btn = document.createElement('button');
-    btn.textContent = 'Begin';
-    btn.onclick = () => { idx++; render(); };
-    container.appendChild(btn);
-  } else if (q.type === 'yesno') {
-    const btnYes = document.createElement('button'); btnYes.textContent = 'Yes';
-    const btnNo = document.createElement('button'); btnNo.textContent = 'No';
-    btnYes.onclick = () => handleAnswer(q, 'yes');
-    btnNo.onclick = () => handleAnswer(q, 'no');
-    const btns = document.createElement('div'); btns.className='buttons';
-    btns.appendChild(btnYes); btns.appendChild(btnNo);
-    container.appendChild(btns);
-  } else if (q.type === 'number') {
-    const input = document.createElement('input'); input.type='number'; input.min='1';
-    input.id='numInput';
-    const btn = document.createElement('button'); btn.textContent='Next';
-    btn.onclick = () => {
-      const val = document.getElementById('numInput').value;
-      if(!val) return;
-      answers[q.key] = parseInt(val,10);
-      idx++; render();
-    };
-    const group = document.createElement('div'); group.className='input-group';
-    group.appendChild(input); group.appendChild(btn);
-    container.appendChild(group);
-  } else if (q.type === 'submit') {
-    const btn = document.createElement('button'); btn.textContent='Get Prediction';
-    btn.onclick = submit;
-    container.appendChild(btn);
-  }
+    const yesNoMap = { Yes: 2, No: 1 }
+    const genderMap = { M: 1, F: 2 }
 
-  wizard.appendChild(container);
-}
+    let index = 0
+    const answers = {}
 
-function handleAnswer(q, ans) {
-  answers[q.key] = q.map[ans];
-  idx++; render();
-}
+    function askNext() {
+      buttons.innerHTML = ''
+      result.textContent = ''
+      if (index >= questions.length) return submit()
+      const q = questions[index]
+      dialogue.textContent = q.prompt
+      if (q.options) {
+        q.options.forEach(option => {
+          const btn = document.createElement('button')
+          btn.textContent = option
+          btn.onclick = () => {
+            answers[q.key] = q.key === 'GENDER' ? genderMap[option] : yesNoMap[option]
+            index++
+            askNext()
+          }
+          buttons.appendChild(btn)
+        })
+      } else if (q.input) {
+        const input = document.createElement('input')
+        input.type = 'number'
+        input.style.padding = '0.5rem'
+        input.style.marginRight = '1rem'
+        buttons.appendChild(input)
+        const btn = document.createElement('button')
+        btn.textContent = 'Submit'
+        btn.onclick = () => {
+          answers[q.key] = parseInt(input.value)
+          index++
+          askNext()
+        }
+        buttons.appendChild(btn)
+      }
+    }
 
-async function submit() {
-  // assume other keys filled manually or defaults
-  try {
-    const res = await fetch('lung-cancer-prediction-api.onrender.com/predict', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(answers)
-    });
-    const data = await res.json();
-    wizard.innerHTML = `<div id=\"result\">Prediction: ${data.prediction}<br>NO: ${data.probabilities.NO.toFixed(2)}, YES: ${data.probabilities.YES.toFixed(2)}</div>`;
-  } catch (e) {
-    wizard.innerHTML = `<div id=\"result\">Error: ${e.message}</div>`;
-  }
-}
+    async function submit() {
+      dialogue.textContent = "Give me a sec while I think this over..."
+      buttons.innerHTML = ''
+      try {
+        const res = await fetch('https://lung-cancer-prediction-api.onrender.com/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(answers)
+        })
+        const data = await res.json()
+        dialogue.textContent = `You're ${data.prediction === 'YES' ? 'likely' : 'unlikely'} to have lung cancer.`
+        result.innerHTML = `Confidence: <strong>${(data.probability * 100).toFixed(2)}%</strong>`
+      } catch (e) {
+        dialogue.textContent = 'Something went wrong. Try again later.'
+      }
+    }
 
-render();
-
-  </script>
-</body>
+    setTimeout(() => {
+      dialogue.textContent = "You ever wonder if the choices you make today ripple through the dust? Let's walk through some questions."
+      const btn = document.createElement('button')
+      btn.textContent = "I'm ready"
+      btn.onclick = () => {
+        index = 0
+        askNext()
+      }
+      buttons.appendChild(btn)
+    }, 1000)
+  </script></body>
 </html>
